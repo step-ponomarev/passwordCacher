@@ -2,6 +2,84 @@ import java.util.ArrayList;
 import java.io.*;
 import java.util.Scanner;
 
+final class Printer {
+  public Printer(final ArrayList<String> fils) {
+    try {
+      for (String path : fils) {
+        File file = new File(path);
+        if (!file.exists()) {
+          file.createNewFile();
+        }
+      }
+    } catch (IOException e) {
+      System.out.println("File creating error");
+    }
+  }
+
+  public ArrayList<String> read(int rows, String path) {
+    ArrayList<String> strs = new ArrayList<String>(rows);
+
+    try {
+      File file = new File(path);
+      Scanner myReader = new Scanner(file);
+
+      for (int k = 0; k < rows; ++k) {
+        strs.add(k, myReader.nextLine());
+      }
+
+      myReader.close();
+    }  catch (IOException e) {
+      System.out.println("File reading Error");
+    }
+
+    return strs;
+   }
+
+   public int read(String path) {
+     int data = 0;
+
+     try {
+       File file = new File(path);
+       if ((file.length() != 0)) {
+         Scanner myReader = new Scanner(file);
+
+         data = Integer.parseInt(myReader.nextLine());
+
+         myReader.close();
+       }
+     }  catch (IOException e) {
+       System.out.println("File reading Error");
+     }
+
+     return data;
+    }
+
+  public void write(final ArrayList<String> strs, int rows, String path) {
+    try {
+      FileWriter file = new FileWriter(path);
+
+      for (int k = 0; k < rows; ++k) {
+        file.write(strs.get(k) + "\n");
+      }
+
+      file.close();
+    } catch (IOException e) {
+      System.out.println("File writing error");
+    }
+  }
+
+  public void write(final int strs, String path) {
+    try {
+      FileWriter file = new FileWriter(path);
+      file.write(Integer.toString(strs) + "\n");
+      file.close();
+    } catch (IOException e) {
+      System.out.println("File writing error");
+    }
+  }
+
+};
+
 final class Cacher {
   private ArrayList<String> m_site;
   private ArrayList<String> m_pass;
@@ -21,8 +99,16 @@ final class Cacher {
     return m_site.get(index);
   }
 
+  public ArrayList<String> getSites() {
+    return m_site;
+  }
+
   public String getPass(int index) {
     return m_pass.get(index);
+  }
+
+  public ArrayList<String> getPasses() {
+    return m_pass;
   }
 
   public void add(String site, String pass) {
@@ -63,39 +149,22 @@ final class Cacher {
 
 class PasswordCacher {
   private Cacher m_cacher;
-  private final String m_path = "./passwords.txt";
+  private Printer m_printer;
+  private final ArrayList<String> m_path;
 
   public PasswordCacher() {
+    m_path = new ArrayList<String>(3);
+    m_path.add("./size.txt");
+    m_path.add("./sites.txt");
+    m_path.add("./passwords.txt");
+
+    m_printer = new Printer(m_path);
+
     ArrayList<String> site = null;
     ArrayList<String> pass = null;
-    int numb = 0;
-
-    try {
-      File cfile = new File(m_path);
-
-      if (!cfile.exists() || (cfile.length() == 0)) {
-        cfile.createNewFile();
-        FileWriter wfile = new FileWriter(m_path);
-        wfile.write(Integer.toString(0));
-        wfile.close();
-      } else {
-        File file = new File(m_path);
-        Scanner myReader = new Scanner(file);
-
-        numb = Integer.parseInt(myReader.nextLine());
-        site = new ArrayList<String>(numb);
-        pass = new ArrayList<String>(numb);
-
-        for (int k = 0; k < numb; ++k) {
-          site.add(k, myReader.nextLine());
-          pass.add(k, myReader.nextLine());
-        }
-
-        myReader.close();
-      }
-    } catch (IOException e) {
-      System.out.println("File Error");
-    }
+    int numb = m_printer.read(m_path.get(0));
+    site = m_printer.read(numb, m_path.get(1));
+    pass = m_printer.read(numb, m_path.get(2));
 
     m_cacher = new Cacher(numb, site, pass);
   }
@@ -131,9 +200,8 @@ class PasswordCacher {
         System.out.println("Список пуст");
         break;
       case "q":
-        exit();
+        synch();
         break;
-
     }
 
       return choose;
@@ -182,23 +250,13 @@ class PasswordCacher {
     }
 
     m_cacher.remove((Integer.parseInt(data) - 1));
+    synch();
   }
 
-  private void exit() {
-    try {
-      FileWriter file = new FileWriter(m_path);
-      file.write(Integer.toString(m_cacher.getSize()) + "\n");
-
-      for (int k = 0; k < m_cacher.getSize(); ++k) {
-        file.write(m_cacher.getSite(k) + "\n");
-        file.write(m_cacher.getPass(k) + "\n");
-      }
-
-      file.close();
-    } catch (IOException e) {
-      System.out.println("File Error");
-    }
-
+  private void synch() {
+    m_printer.write(m_cacher.getSize(), m_path.get(0));
+    m_printer.write(m_cacher.getSites(), m_cacher.getSize(), m_path.get(1));
+    m_printer.write(m_cacher.getPasses(), m_cacher.getSize(), m_path.get(2));
   }
 
   private void printAll() {
