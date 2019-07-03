@@ -2,6 +2,163 @@ import java.util.ArrayList;
 import java.io.*;
 import java.util.Scanner;
 import java.util.Arrays;
+import javax.swing.*;
+import javax.swing.event.*;
+import java.awt.*;
+import java.awt.event.*;
+
+final class MyGui {
+  private JFrame m_main;
+  private JPanel m_bPanel;
+  private JPanel m_lPanel;
+  private JList m_list;
+  private String [] m_listForList;
+  private String m_selectedData;
+  private PasswordCacher m_program;
+
+  public MyGui(final PasswordCacher program) {
+    m_program = program;
+    m_main = new JFrame("Password Cacher");
+    m_bPanel = new JPanel();
+    setupList();
+
+    m_bPanel.setLayout(new BoxLayout(m_bPanel, BoxLayout.Y_AXIS));
+    m_main.getContentPane().add(BorderLayout.EAST, m_bPanel);
+
+    JButton addButton = new JButton("Add Pare");
+    addButton.addActionListener(new addListener());
+    JButton removeButton = new JButton("Remove Pare");
+    removeButton.addActionListener(new RemoveListener());
+    JButton cleanButton = new JButton("Clean the list");
+
+    m_bPanel.add(new JLabel("          Interface:"));
+    m_bPanel.add(addButton);
+    m_bPanel.add(removeButton);
+    m_bPanel.add(cleanButton);
+
+    m_main.setSize(300, 300);
+    m_main.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
+    int x = (int) (dim.getWidth() / 2 - m_main.getWidth() / 2);
+    int y = (int) (dim.getHeight() / 2 - m_main.getHeight() / 2);
+    m_main.setLocation(x, y);
+    m_main.setVisible(true);
+  }
+
+  private void setupList() {
+    ArrayList<String> array = m_program.getArray();
+    String [] list = new String[array.size()];
+    for (int k = 0; k < array.size(); ++k) {
+      list[k] = array.get(k);
+    }
+    Arrays.sort(list);
+    m_list = new JList(list);
+
+    JScrollPane scroller = new JScrollPane(m_list);
+    scroller.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+    scroller.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+
+    m_lPanel = new JPanel();
+    m_lPanel.setLayout(new BoxLayout(m_lPanel, BoxLayout.Y_AXIS));
+    m_lPanel.add(new JLabel("          Services:"));
+    m_lPanel.add(scroller);
+    m_main.getContentPane().add(BorderLayout.CENTER, m_lPanel);
+
+    ListsListener listner = new ListsListener();
+    m_list.addListSelectionListener(listner);
+    m_list.setSelectionMode​(ListSelectionModel.SINGLE_SELECTION);
+    m_list.setPreferredSize(new Dimension(150, 0));
+  }
+
+  private void updateList() {
+    ArrayList<String> array = m_program.getArray();
+    String [] list = new String[array.size()];
+    for (int k = 0; k < array.size(); ++k) {
+      list[k] = array.get(k);
+    }
+    Arrays.sort(list);
+
+    m_list.setListData(list);
+    m_list.revalidate();
+    m_list.repaint();
+  }
+
+  class addListener implements ActionListener {
+    private JFrame m_addFrame;
+    private JPanel m_addPanel;
+    private JTextField m_siteField, m_passField;
+
+    class SiteListener {
+      public void actionPerformed(ActionEvent event) {
+        return;
+      }
+    }
+
+    class PassListener {
+      public void actionPerformed(ActionEvent event) {
+        return;
+      }
+    }
+
+    class AcceptAddListener implements ActionListener {
+      public void actionPerformed(ActionEvent event) {
+        String site = m_siteField.getText();
+        String pass = m_passField.getText();
+        if ((site.length() == 0) || (pass.length() == 0)) {
+          return; // Вставить ошибку
+        } else {
+          m_program.add(site, pass);
+          updateList();
+          m_addFrame.dispose();
+        }
+      }
+    }
+
+    public void actionPerformed(ActionEvent event) {
+      m_addFrame = new JFrame("Add Pare");
+      m_siteField = new JTextField("Name of service");
+      m_passField = new JTextField("pass");
+
+      JButton acceptButton = new JButton("Accept");
+      acceptButton.addActionListener(new AcceptAddListener());
+
+      JPanel panel = new JPanel();
+      panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+      panel.add(m_siteField);
+      panel.add(m_passField);
+
+      panel.add(Box.createRigidArea(new Dimension(70, 0)));
+      panel.add(acceptButton);
+
+      m_addFrame.getContentPane().add(BorderLayout.CENTER, panel);
+      m_addFrame.setSize(200, 100);
+      Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
+      int x = (int) (dim.getWidth() / 2 - m_addFrame.getWidth() / 2);
+      int y = (int) (dim.getHeight() / 2 - m_addFrame.getHeight() / 2);
+      m_addFrame.setLocation(x, y);
+      m_addFrame.setVisible(true);
+    }
+  };
+
+  class RemoveListener implements ActionListener {
+    public void actionPerformed(ActionEvent event) {
+      m_program.remove(m_selectedData);
+      updateList();
+    }
+  };
+
+  /*class CleanListener implements ActionListener {
+
+  };*/
+
+  class ListsListener implements ListSelectionListener {
+    public void valueChanged(ListSelectionEvent lse) {
+      if (!lse.getValueIsAdjusting()) {
+        m_selectedData = (String) m_list.getSelectedValue();
+      }
+    }
+  };
+};
 
 final class Generator {
   private String m_IPass;
@@ -165,7 +322,6 @@ final class Cacher {
     if (index < 0 || index >= m_numb) {
       throw new IndexOutOfBoundsException("Invalid index");
     } else if (m_numb == 0) {
-      System.out.println("Nothing to remove");
       return;
     }
 
@@ -192,6 +348,7 @@ final class Cacher {
 };
 
 class PasswordCacher {
+  private MyGui m_gui;
   private Cacher m_cacher;
   private Printer m_printer;
   private Generator m_generator;
@@ -228,119 +385,38 @@ class PasswordCacher {
 
     m_cacher = new Cacher(iNumb, site, pass);
     synch();
+
+    m_gui = new MyGui(this);
   }
 
-  public String menu() {
-    Scanner input = new Scanner(System.in);
-    String choose = new String();
+  /*public String menu() {
 
-    System.out.println("---------------------");
-    System.out.println("Выберете опцию:");
-    System.out.println("print list (1)");
-    System.out.println("add (2)");
-    System.out.println("remove (3)");
-    System.out.println("clean (4)");
-    System.out.println("add IPass (5)");
-    System.out.println("remove IPass (6)");
-    System.out.println("exit (q)");
-
-    System.out.print("> ");
-    choose = input.nextLine();
-    try {
-      switch (choose) {
-        case "1":
-          printAll();
-          break;
-        case "2":
-          add();
-          break;
-        case "3":
-          remove();
-          break;
-        case "4":
-          m_cacher.clean();
-          synch();
-          System.out.println("---------------------");
-          System.out.println("Список пуст");
-          break;
-        case "5":
-          break;
-        case "6":
-          break;
-        case "q":
-          synch();
-          break;
-      }
-    } catch (Exception ex) {
-      System.out.println("Bad data");
-    }
 
       return choose;
-  }
+  }*/
 
-  private void add() throws Exception {
-    Scanner in = new Scanner(System.in);
-    String site = new String();
-    String pass = new String();
-
-    System.out.println("---------------------");
-    System.out.println("Для отмены введите 'q'");
-
-    System.out.println("Введите название сервиса: ");
-
-    System.out.print("> ");
-    site = in.nextLine();
-    if (site.equals("q")) {
-      return;
-    } else if (site.length() == 0) {
-      throw new Exception("Bad data");
-    }
-
-    System.out.println("Введите пароль: ");
-    System.out.print("> ");
-    pass = in.nextLine();
-    if (pass.equals("q")) {
-      return;
-    } else if (pass.length() == 0) {
-      throw new Exception("Bad data");
-    }
-
+  public void add(String site, String pass) {
     m_cacher.add(site, pass);
-
     synch();
   }
 
-  private void remove() throws Exception {
-    Scanner in = new Scanner(System.in);
-    String data = new String();
-
-    System.out.println("---------------------");
-    System.out.println("Выберите связку для удаления");
-    System.out.println("---------------------");
-    System.out.println("Для отмены введите 'q'");
-    printAll();
-    System.out.print("Номер связки: ");
-    data = in.nextLine();
-    if (data.length() == 0) {
-      throw new Exception("Bad data");
-    }
-    // Счет с 1
-    if (data.equals("q")) {
-      return;
+  public void remove(String site) {
+    int index = m_data.indexOf​(site);
+    if ((index >= 0) && (index < m_data.size())) {
+      m_cacher.remove(index);
+      synch();
     }
 
-    m_cacher.remove((Integer.parseInt(data) - 1));
-
-    synch();
+    return;
   }
 
-  private void synch() {
+  public void synch() {
     int numb = (m_cacher.getSize());
     m_data = new ArrayList<String>(numb);
 
     String data = new String();
     for (int k = 0; k < numb; ++k) {
-      data = m_cacher.getSite(k) + " : " + m_cacher.getPass(k);
+      data = m_cacher.getSite(k);
       if (m_generatorPower) {
         data += m_generator.getIPass();
       }
@@ -353,48 +429,13 @@ class PasswordCacher {
     m_printer.write(m_cacher.getPasses(), m_cacher.getSize(), m_path.get(2));
   }
 
-  private void printAll() {
-    if (m_data.size() == 0) {
-      System.out.println("---------------------");
-      System.out.println("Список пуст");
-      return;
-    }
-
-    System.out.println("---------------------");
-    System.out.println("сервис : пароль (номер)");
-    for (int k = 0; k < m_data.size(); ++k) {
-      System.out.println(m_data.get(k) + " (" + (k + 1)+")");
-    }
+  public ArrayList<String> getArray() {
+    return m_data;
   }
 };
 
 class Launcher {
-  /*public static ArrayList<String> sortStrArrayList(ArrayList<String> array) {
-    if (array == null) {
-      throw new NullPointerException("Null ptr");
-    }
-
-
-
-    String [] tmp = new String[array.size()];
-    for (int k = 0; k < array.size(); ++k) {
-        tmp[k] = array.get(k);
-    }
-    Arrays.sort(tmp);
-
-    ArrayList<String> tmpArray = new ArrayList<String>(array.size());
-    for (int k = 0; k < array.size(); ++k) {
-      tmpArray.add(tmp[k]);
-    }
-
-    return tmpArray;
-  }*/
-
   public static void main(String [] args) {
     PasswordCacher launcher = new PasswordCacher();
-    String code = new String();
-    while (!code.equals("q")) {
-      code = launcher.menu();
-    }
   }
 };
