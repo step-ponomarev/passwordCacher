@@ -7,159 +7,6 @@ import javax.swing.event.*;
 import java.awt.*;
 import java.awt.event.*;
 
-final class MyGui {
-  private JFrame m_main;
-  private JPanel m_bPanel;
-  private JPanel m_lPanel;
-  private JList m_list;
-  private String [] m_listForList;
-  private String m_selectedData;
-  private PasswordCacher m_program;
-
-  public MyGui(final PasswordCacher program) {
-    m_program = program;
-    m_main = new JFrame("Password Cacher");
-    m_bPanel = new JPanel();
-    setupList();
-
-    m_bPanel.setLayout(new BoxLayout(m_bPanel, BoxLayout.Y_AXIS));
-    m_main.getContentPane().add(BorderLayout.EAST, m_bPanel);
-
-    JButton addButton = new JButton("Add Pare");
-    addButton.addActionListener(new addListener());
-    JButton removeButton = new JButton("Remove Pare");
-    removeButton.addActionListener(new RemoveListener());
-    JButton cleanButton = new JButton("Clean the list");
-
-    m_bPanel.add(new JLabel("          Interface:"));
-    m_bPanel.add(addButton);
-    m_bPanel.add(removeButton);
-    m_bPanel.add(cleanButton);
-
-    m_main.setSize(300, 300);
-    m_main.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-    Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
-    int x = (int) (dim.getWidth() / 2 - m_main.getWidth() / 2);
-    int y = (int) (dim.getHeight() / 2 - m_main.getHeight() / 2);
-    m_main.setLocation(x, y);
-    m_main.setVisible(true);
-  }
-
-  private void setupList() {
-    ArrayList<String> array = m_program.getArray();
-    String [] list = new String[array.size()];
-    for (int k = 0; k < array.size(); ++k) {
-      list[k] = array.get(k);
-    }
-    Arrays.sort(list);
-    m_list = new JList(list);
-
-    JScrollPane scroller = new JScrollPane(m_list);
-    scroller.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-    scroller.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-
-    m_lPanel = new JPanel();
-    m_lPanel.setLayout(new BoxLayout(m_lPanel, BoxLayout.Y_AXIS));
-    m_lPanel.add(new JLabel("          Services:"));
-    m_lPanel.add(scroller);
-    m_main.getContentPane().add(BorderLayout.CENTER, m_lPanel);
-
-    ListsListener listner = new ListsListener();
-    m_list.addListSelectionListener(listner);
-    m_list.setSelectionMode​(ListSelectionModel.SINGLE_SELECTION);
-    m_list.setPreferredSize(new Dimension(150, 0));
-  }
-
-  private void updateList() {
-    ArrayList<String> array = m_program.getArray();
-    String [] list = new String[array.size()];
-    for (int k = 0; k < array.size(); ++k) {
-      list[k] = array.get(k);
-    }
-    Arrays.sort(list);
-
-    m_list.setListData(list);
-    m_list.revalidate();
-    m_list.repaint();
-  }
-
-  class addListener implements ActionListener {
-    private JFrame m_addFrame;
-    private JPanel m_addPanel;
-    private JTextField m_siteField, m_passField;
-
-    class SiteListener {
-      public void actionPerformed(ActionEvent event) {
-        return;
-      }
-    }
-
-    class PassListener {
-      public void actionPerformed(ActionEvent event) {
-        return;
-      }
-    }
-
-    class AcceptAddListener implements ActionListener {
-      public void actionPerformed(ActionEvent event) {
-        String site = m_siteField.getText();
-        String pass = m_passField.getText();
-        if ((site.length() == 0) || (pass.length() == 0)) {
-          return; // Вставить ошибку
-        } else {
-          m_program.add(site, pass);
-          updateList();
-          m_addFrame.dispose();
-        }
-      }
-    }
-
-    public void actionPerformed(ActionEvent event) {
-      m_addFrame = new JFrame("Add Pare");
-      m_siteField = new JTextField("Name of service");
-      m_passField = new JTextField("pass");
-
-      JButton acceptButton = new JButton("Accept");
-      acceptButton.addActionListener(new AcceptAddListener());
-
-      JPanel panel = new JPanel();
-      panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-      panel.add(m_siteField);
-      panel.add(m_passField);
-
-      panel.add(Box.createRigidArea(new Dimension(70, 0)));
-      panel.add(acceptButton);
-
-      m_addFrame.getContentPane().add(BorderLayout.CENTER, panel);
-      m_addFrame.setSize(200, 100);
-      Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
-      int x = (int) (dim.getWidth() / 2 - m_addFrame.getWidth() / 2);
-      int y = (int) (dim.getHeight() / 2 - m_addFrame.getHeight() / 2);
-      m_addFrame.setLocation(x, y);
-      m_addFrame.setVisible(true);
-    }
-  };
-
-  class RemoveListener implements ActionListener {
-    public void actionPerformed(ActionEvent event) {
-      m_program.remove(m_selectedData);
-      updateList();
-    }
-  };
-
-  /*class CleanListener implements ActionListener {
-
-  };*/
-
-  class ListsListener implements ListSelectionListener {
-    public void valueChanged(ListSelectionEvent lse) {
-      if (!lse.getValueIsAdjusting()) {
-        m_selectedData = (String) m_list.getSelectedValue();
-      }
-    }
-  };
-};
-
 final class Generator {
   private String m_IPass;
 
@@ -312,17 +159,19 @@ final class Cacher {
     return m_pass;
   }
 
-  public void add(String site, String pass) {
+  public int add(String site, String pass) {
     m_site.add(m_numb, site);
     m_pass.add(m_numb, pass);
     ++m_numb;
+
+    return 1;
   }
 
-  public void remove(int index) {
+  public int remove(int index) {
     if (index < 0 || index >= m_numb) {
       throw new IndexOutOfBoundsException("Invalid index");
     } else if (m_numb == 0) {
-      return;
+      return -1;
     }
 
     ArrayList<String> site = new ArrayList();
@@ -338,6 +187,8 @@ final class Cacher {
     m_site = site;
     m_pass = pass;
     --m_numb;
+
+    return 1;
   }
 
   public void clean() {
@@ -385,29 +236,36 @@ class PasswordCacher {
 
     m_cacher = new Cacher(iNumb, site, pass);
     synch();
-
-    m_gui = new MyGui(this);
   }
 
-  /*public String menu() {
+  public int add(String site, String pass) {
+    if (site.length() == 0 || pass.length() == 0) {
+      return -1;
+    }
 
-
-      return choose;
-  }*/
-
-  public void add(String site, String pass) {
-    m_cacher.add(site, pass);
+    if ((site == null) || (pass == null)) {
+       return -1;
+    }
+    int key = m_cacher.add(site, pass);
     synch();
+
+    return key;
   }
 
-  public void remove(String site) {
+  public int remove(String site) {
     int index = m_data.indexOf​(site);
     if ((index >= 0) && (index < m_data.size())) {
       m_cacher.remove(index);
       synch();
+      return 1;
     }
 
-    return;
+    return -1;
+  }
+
+  public void clean() {
+    m_cacher.clean();
+    synch();
   }
 
   public void synch() {
@@ -434,8 +292,265 @@ class PasswordCacher {
   }
 };
 
+final class MyGui {
+  private JFrame m_main;
+  private JPanel m_bPanel;
+  private JPanel m_lPanel;
+  private JList m_list;
+  private String [] m_listForList;
+  private String m_selectedData;
+  private PasswordCacher m_program;
+  boolean activityMode;
+
+  public MyGui() {
+    m_program = new PasswordCacher();
+    m_main = new JFrame("Password Cacher");
+    m_bPanel = new JPanel();
+    setupList();
+
+    m_bPanel.setLayout(new BoxLayout(m_bPanel, BoxLayout.Y_AXIS));
+    m_main.getContentPane().add(BorderLayout.EAST, m_bPanel);
+
+    JButton addButton = new JButton("Add Pare");
+    addButton.addActionListener(new addListener());
+    JButton removeButton = new JButton("Remove Pare");
+    removeButton.addActionListener(new RemoveListener());
+    JButton cleanButton = new JButton("Clean the list");
+    cleanButton.addActionListener(new CleanListener());
+
+    m_bPanel.add(new JLabel("          Interface:"));
+    m_bPanel.add(addButton);
+    m_bPanel.add(removeButton);
+    m_bPanel.add(cleanButton);
+
+    m_main.setSize(300, 300);
+    m_main.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
+    int x = (int) (dim.getWidth() / 2 - m_main.getWidth() / 2);
+    int y = (int) (dim.getHeight() / 2 - m_main.getHeight() / 2);
+    m_main.setLocation(x, y);
+    m_main.setVisible(true);
+    m_main.setResizable(false);
+    activityMode = false;
+  }
+
+  private void setupList() {
+    ArrayList<String> array = m_program.getArray();
+    String [] list = new String[array.size()];
+    for (int k = 0; k < array.size(); ++k) {
+      list[k] = array.get(k);
+    }
+    Arrays.sort(list);
+    m_list = new JList(list);
+
+    JScrollPane scroller = new JScrollPane(m_list);
+    scroller.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+    scroller.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+
+    m_lPanel = new JPanel();
+    m_lPanel.setLayout(new BoxLayout(m_lPanel, BoxLayout.Y_AXIS));
+    m_lPanel.add(new JLabel("          Services:"));
+    m_lPanel.add(scroller);
+    m_main.getContentPane().add(BorderLayout.CENTER, m_lPanel);
+
+    ListsListener listner = new ListsListener();
+    m_list.addListSelectionListener(listner);
+    m_list.setSelectionMode​(ListSelectionModel.SINGLE_SELECTION);
+    m_list.setPreferredSize(new Dimension(150, 0));
+  }
+
+  private void updateList() {
+    ArrayList<String> array = m_program.getArray();
+    String [] list = new String[array.size()];
+    for (int k = 0; k < array.size(); ++k) {
+      list[k] = array.get(k);
+    }
+    Arrays.sort(list);
+
+    m_list.setListData(list);
+    m_list.revalidate();
+    m_list.repaint();
+  }
+
+  class addListener extends WindowAdapter implements ActionListener {
+    private JFrame m_addFrame;
+    private JPanel m_addPanel;
+    private JTextField m_siteField, m_passField;
+    int errorMode;
+
+    public addListener() {
+      errorMode = 0;
+    }
+
+    class AcceptAddListener implements ActionListener {
+
+      class InvalidDataError extends WindowAdapter implements ActionListener {
+        JFrame invalidDataFrame;
+
+        public int invalidData(String site, String pass) {
+          errorMode = 0;
+          int key = handleError(site, pass);
+          if (key != -1) {
+            m_addFrame.setEnabled(false);
+            m_addFrame.setAlwaysOnTop(false);
+            invalidDataFrame = new JFrame("Invalid Data");
+
+            String dataError = "\n";
+            switch(key) {
+              case 0:
+                dataError = "Put in service";
+                break;
+              case 1:
+                dataError = "Put in password";
+                break;
+              case 2:
+                dataError = "Put in both values";
+                break;
+                case 3:
+                dataError = "Duplicate service";
+                break;
+            }
+
+            JButton applyButton = new JButton("Apply");
+            applyButton.addActionListener(this);
+
+            JPanel panel = new JPanel();
+
+            invalidDataFrame.getContentPane().add(BorderLayout.NORTH, new JLabel(dataError));
+            invalidDataFrame.getContentPane().add(BorderLayout.CENTER, applyButton);
+            invalidDataFrame.setResizable(false);
+            invalidDataFrame.addWindowListener(this);
+
+            invalidDataFrame.setSize(200, 100);
+            Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
+            int x = (int) (dim.getWidth() / 2 - invalidDataFrame.getWidth() / 2);
+            int y = (int) (dim.getHeight() / 2 - invalidDataFrame.getHeight() / 2);
+            invalidDataFrame.setLocation(x, y);
+            invalidDataFrame.setVisible(true);
+            invalidDataFrame.setAlwaysOnTop(true);
+          }
+
+          return key;
+        }
+
+        public void actionPerformed(ActionEvent event) {
+          errorMode = 0;
+          invalidDataFrame.dispose();
+          m_addFrame.setEnabled(true);
+          m_addFrame.setAlwaysOnTop(true);
+        }
+
+        public void windowClosing(WindowEvent e) {
+          m_addFrame.setEnabled(true);
+          m_addFrame.setAlwaysOnTop(true);
+          errorMode = 0;
+        }
+      };
+
+      public int handleError(String site, String pass) {
+        int errorCode = -1;
+
+        if (site.length() == 0) {
+          errorCode = 0;
+        }
+
+        if (pass.length() == 0) {
+          errorCode = 1;
+        }
+
+        if ((site.length() == 0) && (pass.length() == 0)) {
+          errorCode = 2;
+        }
+
+        if (m_program.getArray().contains(site)) {
+          errorCode = 3;
+        }
+
+        return errorCode;
+      }
+
+      public void actionPerformed(ActionEvent event) {
+        if (errorMode == 0) {
+          String site = m_siteField.getText();
+          String pass = m_passField.getText();
+          int key = new InvalidDataError().invalidData(site, pass);
+
+          if (key == -1) {
+            m_program.add(site, pass);
+            updateList();
+            m_addFrame.dispose();
+            activityMode = false;
+            m_main.setEnabled(true);
+          }
+        }
+      }
+    };
+
+    public void actionPerformed(ActionEvent event) {
+      if (!activityMode) {
+        m_addFrame = new JFrame("Add Pare");
+        m_siteField = new JTextField("Name of service");
+        m_passField = new JTextField("pass");
+        activityMode = true;
+        m_main.setEnabled(false);
+
+        JButton acceptButton = new JButton("Accept");
+        acceptButton.addActionListener(new AcceptAddListener());
+
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.add(m_siteField);
+        panel.add(m_passField);
+
+        panel.add(Box.createRigidArea(new Dimension(70, 0)));
+        panel.add(acceptButton);
+
+        m_addFrame.getContentPane().add(BorderLayout.CENTER, panel);
+        m_addFrame.setSize(200, 100);
+        Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
+        int x = (int) (dim.getWidth() / 2 - m_addFrame.getWidth() / 2);
+        int y = (int) (dim.getHeight() / 2 - m_addFrame.getHeight() / 2);
+        m_addFrame.setLocation(x, y);
+        m_addFrame.setVisible(true);
+        m_addFrame.setResizable(false);
+        m_addFrame.setAlwaysOnTop(true);
+        m_addFrame.setFocusableWindowState(true);
+        m_addFrame.addWindowListener(this);
+      }
+    }
+
+    public void windowClosing(WindowEvent e) {
+      m_main.setEnabled(true);
+      activityMode = false;
+    }
+  };
+
+  class RemoveListener implements ActionListener {
+    public void actionPerformed(ActionEvent event) {
+      m_program.remove(m_selectedData);
+      updateList();
+    }
+  };
+
+  class CleanListener implements ActionListener {
+
+    public void actionPerformed(ActionEvent event) {
+      m_program.clean();
+      updateList();
+    }
+  };
+
+  class ListsListener implements ListSelectionListener {
+    public void valueChanged(ListSelectionEvent lse) {
+      if (!lse.getValueIsAdjusting()) {
+        m_selectedData = (String) m_list.getSelectedValue();
+      }
+    }
+  };
+};
+
 class Launcher {
   public static void main(String [] args) {
-    PasswordCacher launcher = new PasswordCacher();
+    MyGui launcher = new MyGui();
   }
 };
